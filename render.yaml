@@ -1,0 +1,22 @@
+projects:
+  - name: portfolio
+    environments:
+      - name: production
+        services:
+          - type: web
+            runtime: docker
+            name: portfolio-backend
+            repo: https://github.com/ZorionTen/portfolio-backend
+            plan: free
+            autoDeployTrigger: checksPass
+            healthCheckPath: /actuator/health
+          - type: web
+            runtime: docker
+            name: portfolio-ai
+            repo: https://github.com/ZorionTen/portfolio-ai
+            plan: free
+            autoDeployTrigger: checksPass
+            healthCheckPath: /health
+            envVars:
+              - key: GROQ_API_KEY
+                sync: false
