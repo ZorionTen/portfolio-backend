@@ -111,11 +111,9 @@ class GithubRepositoryServiceTests {
 		assertThat(cached).isSameAs(first);
 		assertThat(first.fetchedAt()).isEqualTo(NOW);
 		assertThat(first.repositories()).extracting(GithubPortfolio.Repository::name)
-				.containsExactly("portfolio", "rush-serve-ui", "rushserve-docker");
+				.containsExactly("portfolio");
 		assertThat(first.repositories().get(0).url()).isEqualTo("https://github.com/ZorionTen/portfolio");
-		assertThat(first.repositories().get(1).url()).isNull();
-		assertThat(first.repositories().get(1).lastUpdatedAt())
-				.isEqualTo(Instant.parse("2026-08-12T10:00:00Z"));
+		assertThat(first.repositories()).allMatch(repository -> !repository.isPrivate());
 		assertThat(first.rushServe().repositoryCount()).isEqualTo(2);
 		assertThat(first.rushServe().lastUpdatedAt())
 				.isEqualTo(Instant.parse("2026-08-12T10:00:00Z"));
