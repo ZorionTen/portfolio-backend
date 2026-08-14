@@ -8,6 +8,7 @@ projects:
             name: portfolio-backend
             repo: https://github.com/ZorionTen/portfolio-backend
             plan: free
+            region: singapore
             autoDeployTrigger: checksPass
             healthCheckPath: /actuator/health
           - type: web
@@ -15,6 +16,7 @@ projects:
             name: portfolio-ai
             repo: https://github.com/ZorionTen/portfolio-ai
             plan: free
+            region: singapore
             autoDeployTrigger: checksPass
             healthCheckPath: /health
             envVars:
