@@ -11,6 +11,15 @@ projects:
             region: singapore
             autoDeployTrigger: checksPass
             healthCheckPath: /actuator/health
+            envVars:
+              - key: SPRING_DATASOURCE_URL
+                sync: false
+              - key: SPRING_DATASOURCE_USERNAME
+                sync: false
+              - key: SPRING_DATASOURCE_PASSWORD
+                sync: false
+              - key: GITHUB_API_TOKEN
+                sync: false
           - type: web
             runtime: docker
             name: portfolio-ai
@@ -22,3 +31,7 @@ projects:
             envVars:
               - key: GROQ_API_KEY
                 sync: false
+              - key: GITHUB_KNOWLEDGE_URL
+                value: https://portfolio-backend-lutt.onrender.com/api/github/knowledge
+              - key: SKILLS_FILE
+                value: /etc/secrets/JOB_APPLICATION_MASTER.md
