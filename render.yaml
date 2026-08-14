@@ -20,6 +20,8 @@ projects:
                 sync: false
               - key: GITHUB_API_TOKEN
                 sync: false
+              - key: AI_SERVICE_URL
+                value: https://portfolio-ai-dla4.onrender.com
           - type: web
             runtime: docker
             name: portfolio-ai
