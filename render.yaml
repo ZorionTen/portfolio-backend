@@ -4,12 +4,12 @@ projects:
       - name: production
         services:
           - type: web
-            runtime: docker
+            runtime: image
             name: portfolio-backend
-            repo: https://github.com/ZorionTen/portfolio-backend
+            image:
+              url: ghcr.io/zorionten/portfolio-backend:main
             plan: free
             region: singapore
-            autoDeployTrigger: checksPass
             healthCheckPath: /actuator/health
             envVars:
               - key: SPRING_DATASOURCE_URL

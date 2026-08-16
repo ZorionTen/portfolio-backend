@@ -1,0 +1,118 @@
+name: Native Image
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: native-production
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Confirm current main revision
+        id: revision
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          current_sha="$(git rev-parse FETCH_HEAD)"
+          if [[ "$SOURCE_SHA" != "$current_sha" ]]; then
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping stale revision $SOURCE_SHA; main is now $current_sha."
+            exit 0
+          fi
+          echo "current=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        if: steps.revision.outputs.current == 'true'
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Resolve image coordinates
+        if: steps.revision.outputs.current == 'true'
+        id: image
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "tag=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Build native image
+        if: steps.revision.outputs.current == 'true'
+        run: >-
+          ./mvnw -Pnative -Djava.version=25 -DskipTests spring-boot:build-image
+          -Dspring-boot.build-image.imageName=${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+          -Dspring-boot.build-image.imagePlatform=linux/amd64
+
+      - name: Confirm revision remains current
+        if: steps.revision.outputs.current == 'true'
+        id: release
+        env:
+          SOURCE_SHA: ${{ steps.image.outputs.tag }}
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          current_sha="$(git rev-parse FETCH_HEAD)"
+          if [[ "$SOURCE_SHA" != "$current_sha" ]]; then
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping stale revision $SOURCE_SHA; main is now $current_sha."
+            exit 0
+          fi
+          echo "current=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish image
+        if: steps.release.outputs.current == 'true'
+        id: publish
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+          IMAGE_TAG: ${{ steps.image.outputs.tag }}
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE_NAME:$IMAGE_TAG"
+          docker tag "$IMAGE_NAME:$IMAGE_TAG" "$IMAGE_NAME:main"
+          docker push "$IMAGE_NAME:main"
+          image_digest="$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE_NAME:$IMAGE_TAG")"
+          if [[ "$image_digest" != "$IMAGE_NAME@sha256:"* ]]; then
+            echo "Could not resolve the published image digest." >&2
+            exit 1
+          fi
+          echo "reference=$image_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy image digest to Render
+        if: steps.release.outputs.current == 'true'
+        env:
+          IMAGE_REFERENCE: ${{ steps.publish.outputs.reference }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [[ -z "$RENDER_DEPLOY_HOOK_URL" ]]; then
+            echo "::notice::Add RENDER_DEPLOY_HOOK_URL to enable automatic Render deploys."
+            exit 0
+          fi
+
+          encoded_image="$(jq -rn --arg image "$IMAGE_REFERENCE" '$image | @uri')"
+          separator="?"
+          [[ "$RENDER_DEPLOY_HOOK_URL" == *\?* ]] && separator="&"
+          curl --fail-with-body --silent --show-error --request POST \
+            "${RENDER_DEPLOY_HOOK_URL}${separator}imgURL=${encoded_image}"

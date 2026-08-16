@@ -1,6 +1,6 @@
 # Portfolio Backend
 
-Minimal Spring Boot service for the portfolio application. Render builds it from `Dockerfile` and checks `/actuator/health` before routing traffic.
+Minimal Spring Boot service for the portfolio application. GitHub Actions publishes a GraalVM native image for Render, which checks `/actuator/health` before routing traffic.
 
 ## Local Development
 
@@ -36,11 +36,27 @@ docker run --rm -p 8080:8080 portfolio-backend
 
 ## Render
 
-This repository owns `render.yaml`. The Blueprint creates one Render project named `portfolio` with two Docker services sourced from:
+This repository owns `render.yaml`. The Blueprint creates one Render project named `portfolio` with these services:
 
-- `ZorionTen/portfolio-backend`
-- `ZorionTen/portfolio-ai`
+- `portfolio-backend`, pulled as a prebuilt native image from GHCR.
+- `portfolio-ai`, built from `ZorionTen/portfolio-ai` on Render.
 
 [Deploy the Blueprint to Render](https://render.com/deploy?repo=https://github.com/ZorionTen/portfolio-backend)
 
 Render prompts for the Supabase credentials and `GITHUB_API_TOKEN` for the backend, plus `GROQ_API_KEY` for the AI service, during Blueprint setup. Never commit those values.
+
+The `Native Image` workflow runs after `CI` succeeds on `main`. It builds the backend with Spring AOT and GraalVM, then publishes these images to GitHub Container Registry:
+
+- `ghcr.io/zorionten/portfolio-backend:<commit-sha>` for traceability and rollbacks.
+- `ghcr.io/zorionten/portfolio-backend:main` as the Blueprint default.
+
+Complete these one-time deployment steps for the initial rollout:
+
+1. Disable Blueprint Auto Sync in Render before merging the runtime change, because the GHCR image does not exist yet.
+2. Merge the change and wait for the first `Native Image` workflow to publish the package.
+3. In the package settings on GitHub, change `portfolio-backend` visibility to public so Render can pull it without registry credentials. GitHub does not allow changing a public package back to private.
+4. Manually sync the Render Blueprint so `portfolio-backend` changes from a Git-backed Docker service to the prebuilt image.
+5. Copy the backend service deploy hook from Render and add it as the `RENDER_DEPLOY_HOOK_URL` Actions secret in GitHub.
+6. Re-enable Blueprint Auto Sync.
+
+The workflow resolves the published image digest and passes that immutable digest to the deploy hook, so production never depends on a stale mutable tag. It also refuses to publish a delayed CI result if `main` has moved to a newer commit. If the deploy-hook secret is absent, image publication still succeeds and the workflow reports that automatic deployment was skipped.
