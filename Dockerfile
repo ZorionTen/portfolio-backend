@@ -10,6 +10,9 @@ RUN ./mvnw package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 
+ARG BUILD_TIMESTAMP
+ENV BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
+
 RUN addgroup -S spring && adduser -S spring -G spring
 WORKDIR /app
 COPY --from=build --chown=spring:spring /workspace/target/portfolio-backend-*.jar app.jar

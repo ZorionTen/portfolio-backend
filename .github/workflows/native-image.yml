@@ -58,6 +58,7 @@ jobs:
         run: |
           echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
           echo "tag=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "build_timestamp=$(date +%s%3N)" >> "$GITHUB_OUTPUT"
 
       - name: Build native image
         if: steps.revision.outputs.current == 'true'
@@ -65,6 +66,7 @@ jobs:
           ./mvnw -Pnative -Djava.version=25 -DskipTests spring-boot:build-image
           -Dspring-boot.build-image.imageName=${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
           -Dspring-boot.build-image.imagePlatform=linux/amd64
+          -Dspring-boot.build-image.env.BUILD_TIMESTAMP=${{ steps.image.outputs.build_timestamp }}
 
       - name: Confirm revision remains current
         if: steps.revision.outputs.current == 'true'
