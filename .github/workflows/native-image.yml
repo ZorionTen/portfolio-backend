@@ -46,8 +46,8 @@ jobs:
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         if: steps.revision.outputs.current == 'true'
         with:
-          distribution: temurin
-          java-version: '21'
+          distribution: graalvm
+          java-version: '25'
           cache: maven
 
       - name: Resolve image coordinates
@@ -62,10 +62,8 @@ jobs:
 
       - name: Build native image
         if: steps.revision.outputs.current == 'true'
-        env:
-          BP_JVM_VERSION: "25"
         run: >-
-          ./mvnw -Pnative -Djava.version=25 -DskipTests spring-boot:build-image
+          ./mvnw -Pnative -DskipTests spring-boot:build-image
           -Dspring-boot.build-image.imageName=${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
           -Dspring-boot.build-image.imagePlatform=linux/amd64
           -Dspring-boot.build-image.env.BUILD_TIMESTAMP=${{ steps.image.outputs.build_timestamp }}
