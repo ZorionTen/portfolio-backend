@@ -233,7 +233,7 @@ class GithubRepositoryService {
 				.orElse(null);
 
 		GithubPortfolio portfolio = new GithubPortfolio(
-				repositories.stream().filter(repository -> !repository.isPrivate()).toList(),
+				repositories,
 				new GithubPortfolio.RushServeActivity(rushServeRepositories.size(), rushServeUpdatedAt),
 				fetchedAt
 		);
