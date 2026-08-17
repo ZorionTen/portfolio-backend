@@ -1,0 +1,21 @@
+#!/bin/bash
+# Pre-push hook: run tests before pushing
+
+echo "🧪 Running tests before push..."
+
+if [ ! -f "pom.xml" ]; then
+    echo "❌ Not in portfolio-backend directory"
+    exit 1
+fi
+
+./mvnw verify -q
+RESULT=$?
+
+if [ $RESULT -ne 0 ]; then
+    echo "❌ Tests failed! Push aborted."
+    echo "Run './mvnw verify' to see details."
+    exit 1
+fi
+
+echo "✅ All tests passed!"
+exit 0
