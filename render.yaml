@@ -29,7 +29,7 @@ projects:
             repo: https://github.com/ZorionTen/portfolio-ai
             plan: free
             region: singapore
-            autoDeployTrigger: checksPass
+            autoDeploy: "yes"
             healthCheckPath: /health
             envVars:
               - key: GROQ_API_KEY
