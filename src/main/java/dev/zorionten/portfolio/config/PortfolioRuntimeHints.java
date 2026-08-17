@@ -21,6 +21,11 @@ public final class PortfolioRuntimeHints implements RuntimeHintsRegistrar {
 				"org.hibernate.validator.internal.util.logging.Messages_$bundle",
 				MemberCategory.ACCESS_DECLARED_FIELDS
 		);
+		hints.reflection().registerTypeIfPresent(
+				classLoader,
+				"dev.zorionten.portfolio.github.GithubRepositoryService$GraphqlRequest",
+				MemberCategory.ALL_METHODS
+		);
 	}
 
 }

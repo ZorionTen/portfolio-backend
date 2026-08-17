@@ -1,7 +1,11 @@
 package dev.zorionten.portfolio.github;
 
+import org.springframework.aot.hint.MemberCategory;
+import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,7 +26,26 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 @Service
+@ImportRuntimeHints(GithubRepositoryService.GithubRepositoryHints.class)
 class GithubRepositoryService {
+
+	static class GithubRepositoryHints implements RuntimeHintsRegistrar {
+		@Override
+		public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+			hints.reflection().registerType(GraphqlRequest.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(GraphqlResponse.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(GraphqlData.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(Viewer.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(RepositoryConnection.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(RepositoryNode.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(Language.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(Refs.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(RefNode.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(Commit.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(PageInfo.class, MemberCategory.ALL_METHODS);
+			hints.reflection().registerType(GraphqlError.class, MemberCategory.ALL_METHODS);
+		}
+	}
 	private static final int MAX_README_CHARACTERS = 20_000;
 	private static final Map<String, String> TECHNOLOGIES = Map.ofEntries(
 			Map.entry("api gateway", "API Gateway"),
@@ -323,28 +346,28 @@ class GithubRepositoryService {
 		return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
 	}
 
-	private record GithubData(GithubPortfolio portfolio, GithubKnowledge knowledge) {
+	record GithubData(GithubPortfolio portfolio, GithubKnowledge knowledge) {
 	}
 
-	private record CacheEntry(GithubData data, Instant expiresAt) {
+	record CacheEntry(GithubData data, Instant expiresAt) {
 	}
 
-	private record GraphqlRequest(String query, Map<String, String> variables) {
+	record GraphqlRequest(String query, Map<String, String> variables) {
 	}
 
-	private record GraphqlResponse(GraphqlData data, List<GraphqlError> errors) {
+	record GraphqlResponse(GraphqlData data, List<GraphqlError> errors) {
 	}
 
-	private record GraphqlData(Viewer viewer) {
+	record GraphqlData(Viewer viewer) {
 	}
 
-	private record Viewer(RepositoryConnection repositories) {
+	record Viewer(RepositoryConnection repositories) {
 	}
 
-	private record RepositoryConnection(List<RepositoryNode> nodes, PageInfo pageInfo) {
+	record RepositoryConnection(List<RepositoryNode> nodes, PageInfo pageInfo) {
 	}
 
-	private record RepositoryNode(
+	record RepositoryNode(
 			String id,
 			String name,
 			String nameWithOwner,
@@ -358,21 +381,21 @@ class GithubRepositoryService {
 	) {
 	}
 
-	private record Language(String name) {
+	record Language(String name) {
 	}
 
-	private record Refs(List<RefNode> nodes) {
+	record Refs(List<RefNode> nodes) {
 	}
 
-	private record RefNode(Commit target) {
+	record RefNode(Commit target) {
 	}
 
-	private record Commit(Instant committedDate) {
+	record Commit(Instant committedDate) {
 	}
 
-	private record PageInfo(boolean hasNextPage, String endCursor) {
+	record PageInfo(boolean hasNextPage, String endCursor) {
 	}
 
-	private record GraphqlError(String message) {
+	record GraphqlError(String message) {
 	}
 }
