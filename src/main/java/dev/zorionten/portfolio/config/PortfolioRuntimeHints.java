@@ -24,7 +24,7 @@ public final class PortfolioRuntimeHints implements RuntimeHintsRegistrar {
 		hints.reflection().registerTypeIfPresent(
 				classLoader,
 				"dev.zorionten.portfolio.github.GithubRepositoryService$GraphqlRequest",
-				MemberCategory.ALL_METHODS
+				MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.ACCESS_DECLARED_FIELDS
 		);
 	}
 

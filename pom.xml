@@ -86,14 +86,6 @@
 			<plugin>
 				<groupId>org.graalvm.buildtools</groupId>
 				<artifactId>native-maven-plugin</artifactId>
-				<version>0.10.14</version>
-				<extensions>true</extensions>
-				<configuration>
-					<mainClass>dev.zorionten.portfolio.PortfolioBackendApplication</mainClass>
-					<buildArgs combine.children="append">
-						<buildArg>--enable-url-protocols=http,https</buildArg>
-					</buildArgs>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
