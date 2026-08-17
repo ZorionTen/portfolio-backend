@@ -10,6 +10,7 @@ projects:
               url: ghcr.io/zorionten/portfolio-backend:main
             plan: free
             region: singapore
+            autoDeploy: "no"
             healthCheckPath: /actuator/health
             envVars:
               - key: SPRING_DATASOURCE_URL
