@@ -60,10 +60,10 @@ jobs:
           echo "tag=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
           echo "build_timestamp=$(date +%s%3N)" >> "$GITHUB_OUTPUT"
 
-      - name: Build JVM Docker image
+      - name: Build native image
         if: steps.revision.outputs.current == 'true'
         run: >-
-          ./mvnw -DskipTests spring-boot:build-image
+          ./mvnw -Pnative -Djava.version=21 -DskipTests spring-boot:build-image
           -Dspring-boot.build-image.imageName=${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
           -Dspring-boot.build-image.imagePlatform=linux/amd64
           -Dspring-boot.build-image.env.BUILD_TIMESTAMP=${{ steps.image.outputs.build_timestamp }}
