@@ -108,6 +108,9 @@ class GithubRepositoryService {
 			        url
 			        pushedAt
 			        primaryLanguage { name }
+			        languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+			          nodes { name }
+			        }
 			        refs(refPrefix: "refs/heads/", first: 100) {
 			          nodes {
 			            target {
@@ -330,13 +333,19 @@ class GithubRepositoryService {
 						.max(Comparator.naturalOrder())
 						.orElse(node.pushedAt());
 
+		List<String> languages = node.languages() == null || node.languages().nodes() == null
+				? List.of()
+				: node.languages().nodes().stream()
+						.map(Language::name)
+						.toList();
+
 		return new GithubPortfolio.Repository(
 				node.id(),
 				node.name(),
 				node.description(),
 				node.isPrivate(),
 				node.isFork(),
-				node.primaryLanguage() == null ? null : node.primaryLanguage().name(),
+				languages,
 				latestCommit,
 				node.isPrivate() ? null : node.url()
 		);
@@ -377,11 +386,15 @@ class GithubRepositoryService {
 			String url,
 			Instant pushedAt,
 			Language primaryLanguage,
+			Languages languages,
 			Refs refs
 	) {
 	}
 
 	record Language(String name) {
+	}
+
+	record Languages(List<Language> nodes) {
 	}
 
 	record Refs(List<RefNode> nodes) {

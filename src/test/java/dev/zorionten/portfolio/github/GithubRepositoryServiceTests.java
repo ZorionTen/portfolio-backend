@@ -110,13 +110,22 @@ class GithubRepositoryServiceTests {
 
 		assertThat(cached).isSameAs(first);
 		assertThat(first.fetchedAt()).isEqualTo(NOW);
+		// Now includes all repos (private + public), private ones have null URL
 		assertThat(first.repositories()).extracting(GithubPortfolio.Repository::name)
-				.containsExactly("portfolio");
-		assertThat(first.repositories().get(0).url()).isEqualTo("https://github.com/ZorionTen/portfolio");
-		assertThat(first.repositories()).allMatch(repository -> !repository.isPrivate());
+				.containsExactly("portfolio", "rush-serve-ui", "rushserve-docker");
+		// Public repo has URL, private repos have null URL
+		assertThat(first.repositories())
+				.filteredOn(repository -> !repository.isPrivate())
+				.extracting(GithubPortfolio.Repository::url)
+				.containsExactly("https://github.com/ZorionTen/portfolio");
+		assertThat(first.repositories())
+				.filteredOn(GithubPortfolio.Repository::isPrivate)
+				.extracting(GithubPortfolio.Repository::url)
+				.containsOnlyNulls();
 		assertThat(first.rushServe().repositoryCount()).isEqualTo(2);
 		assertThat(first.rushServe().lastUpdatedAt())
 				.isEqualTo(Instant.parse("2026-08-12T10:00:00Z"));
+		// Knowledge includes public repo + private project evidence
 		assertThat(knowledge.sources()).extracting(GithubKnowledge.Source::source)
 				.containsExactly("GitHub: portfolio", "Private project evidence");
 		assertThat(knowledge.sources().get(1).text())

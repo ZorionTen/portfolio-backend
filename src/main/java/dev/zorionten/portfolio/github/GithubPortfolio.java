@@ -14,7 +14,7 @@ record GithubPortfolio(
 			String description,
 			boolean isPrivate,
 			boolean isFork,
-			String language,
+			List<String> languages,
 			Instant lastUpdatedAt,
 			String url
 	) {
