@@ -15,9 +15,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -89,7 +89,41 @@ class GithubRepositoryService {
 			Map.entry("webhook", "Webhooks")
 	);
 
-	private static final String REPOS_PATH = "/user/repos";
+	private static final String REPOSITORIES_QUERY = """
+			query PortfolioRepositories($cursor: String) {
+			  viewer {
+			    repositories(
+			      first: 100
+			      after: $cursor
+			      affiliations: [OWNER, COLLABORATOR, ORGANIZATION_MEMBER]
+			      orderBy: {field: PUSHED_AT, direction: DESC}
+			    ) {
+			      nodes {
+			        id
+			        name
+			        nameWithOwner
+			        description
+			        isPrivate
+			        isFork
+			        url
+			        pushedAt
+			        primaryLanguage { name }
+			        languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+			          nodes { name }
+			        }
+			        refs(refPrefix: "refs/heads/", first: 100) {
+			          nodes {
+			            target {
+			              ... on Commit { committedDate }
+			            }
+			          }
+			        }
+			      }
+			      pageInfo { hasNextPage endCursor }
+			    }
+			  }
+			}
+			""";
 
 	private final RestClient restClient;
 	private final String token;
@@ -150,7 +184,6 @@ class GithubRepositoryService {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private GithubData fetchData(Instant fetchedAt) {
 		if (token == null || token.isBlank()) {
 			throw new ResponseStatusException(
@@ -161,48 +194,36 @@ class GithubRepositoryService {
 
 		List<GithubPortfolio.Repository> repositories = new ArrayList<>();
 		List<RepositoryNode> repositoryNodes = new ArrayList<>();
-		int page = 1;
+		String cursor = null;
 		boolean hasNextPage;
 
 		do {
-			List<Map<String, Object>> reposPage;
+			GraphqlResponse response;
 			try {
-				reposPage = restClient.get()
-						.uri(REPOS_PATH + "?sort=pushed&direction=desc&per_page=100&page={page}", page)
+				response = restClient.post()
+						.uri("/graphql")
 						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+						.body(new GraphqlRequest(REPOSITORIES_QUERY, Collections.singletonMap("cursor", cursor)))
 						.retrieve()
-						.body(List.class);
+						.body(GraphqlResponse.class);
 			} catch (RuntimeException exception) {
 				throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "GitHub repository data is unavailable", exception);
 			}
 
-			if (reposPage == null || reposPage.isEmpty()) {
-				break;
+			if (response == null || response.data() == null || response.data().viewer() == null
+					|| response.data().viewer().repositories() == null
+					|| response.errors() != null && !response.errors().isEmpty()) {
+				throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "GitHub returned an invalid repository response");
 			}
 
-			for (Map<String, Object> repo : reposPage) {
-				String id = String.valueOf(((Number) repo.get("id")).longValue());
-				String name = (String) repo.get("name");
-				String fullName = (String) repo.getOrDefault("full_name", "");
-				String description = (String) repo.getOrDefault("description", "");
-				boolean isPrivate = (Boolean) repo.getOrDefault("private", false);
-				boolean isFork = (Boolean) repo.getOrDefault("fork", false);
-				String htmlUrl = (String) repo.getOrDefault("html_url", "");
-				Instant pushedAt = parsedInstant((String) repo.getOrDefault("pushed_at", ""));
-				String langName = (String) repo.get("language");
-				Language primaryLang = langName != null ? new Language(langName) : null;
-
-				RepositoryNode node = new RepositoryNode(
-						id, name, fullName, description,
-						isPrivate, isFork, htmlUrl, pushedAt,
-						primaryLang, new Languages(List.of()), null
-				);
+			RepositoryConnection connection = response.data().viewer().repositories();
+			for (RepositoryNode node : connection.nodes()) {
 				repositoryNodes.add(node);
 				repositories.add(toRepository(node));
 			}
 
-			hasNextPage = reposPage.size() == 100;
-			page++;
+			hasNextPage = connection.pageInfo().hasNextPage();
+			cursor = connection.pageInfo().endCursor();
 		} while (hasNextPage);
 
 		repositories.sort(Comparator.comparing(GithubPortfolio.Repository::lastUpdatedAt).reversed());
@@ -332,17 +353,6 @@ class GithubRepositoryService {
 
 	private String normalize(String value) {
 		return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
-	}
-
-	private Instant parsedInstant(String dateStr) {
-		if (dateStr == null || dateStr.isEmpty()) {
-			return Instant.EPOCH;
-		}
-		try {
-			return Instant.parse(dateStr);
-		} catch (DateTimeParseException e) {
-			return Instant.EPOCH;
-		}
 	}
 
 	record GithubData(GithubPortfolio portfolio, GithubKnowledge knowledge) {
