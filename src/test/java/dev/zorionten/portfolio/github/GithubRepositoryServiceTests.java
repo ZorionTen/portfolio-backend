@@ -27,64 +27,45 @@ class GithubRepositoryServiceTests {
 	void aggregatesRushServeActivityAndCachesRepositoryData() {
 		RestClient.Builder builder = RestClient.builder();
 		MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-		server.expect(requestTo("https://api.github.test/graphql"))
-				.andExpect(method(HttpMethod.POST))
+		server.expect(requestTo("https://api.github.test/user/repos?sort=pushed&direction=desc&per_page=100&page=1"))
+				.andExpect(method(HttpMethod.GET))
 				.andExpect(header("Authorization", "Bearer test-token"))
 				.andRespond(withSuccess("""
-						{
-						  "data": {
-						    "viewer": {
-						      "repositories": {
-						        "nodes": [
-						          {
-						            "id": "R_rush_ui",
-						            "name": "rush-serve-ui",
-						            "nameWithOwner": "team/rush-serve-ui",
-						            "description": "RushServe frontend",
-						            "isPrivate": true,
-						            "isFork": false,
-						            "url": "https://github.com/team/rush-serve-ui",
-						            "pushedAt": "2026-08-13T00:00:00Z",
-						            "primaryLanguage": {"name": "TypeScript"},
-						            "refs": {"nodes": [
-						              {"target": {"committedDate": "2026-08-11T10:00:00Z"}},
-						              {"target": {"committedDate": "2026-08-12T10:00:00Z"}}
-						            ]}
-						          },
-						          {
-						            "id": "R_portfolio",
-						            "name": "portfolio",
-						            "nameWithOwner": "ZorionTen/portfolio",
-						            "description": "Portfolio orchestration",
-						            "isPrivate": false,
-						            "isFork": false,
-						            "url": "https://github.com/ZorionTen/portfolio",
-						            "pushedAt": "2026-08-14T07:00:00Z",
-						            "primaryLanguage": null,
-						            "refs": {"nodes": [
-						              {"target": {"committedDate": "2026-08-14T07:30:00Z"}}
-						            ]}
-						          },
-						          {
-						            "id": "R_rush_docker",
-						            "name": "rushserve-docker",
-						            "nameWithOwner": "ZorionTen/rushserve-docker",
-						            "description": "RushServe local stack",
-						            "isPrivate": true,
-						            "isFork": false,
-						            "url": "https://github.com/ZorionTen/rushserve-docker",
-						            "pushedAt": "2026-08-10T00:00:00Z",
-						            "primaryLanguage": {"name": "Shell"},
-						            "refs": {"nodes": [
-						              {"target": {"committedDate": "2026-08-10T08:00:00Z"}}
-						            ]}
-						          }
-						        ],
-						        "pageInfo": {"hasNextPage": false, "endCursor": null}
-						      }
-						    }
+						[
+						  {
+						    "id": 1001,
+						    "name": "rush-serve-ui",
+						    "full_name": "team/rush-serve-ui",
+						    "description": "RushServe frontend",
+						    "private": true,
+						    "fork": false,
+						    "html_url": "https://github.com/team/rush-serve-ui",
+						    "pushed_at": "2026-08-13T00:00:00Z",
+						    "language": "TypeScript"
+						  },
+						  {
+						    "id": 1002,
+						    "name": "portfolio",
+						    "full_name": "ZorionTen/portfolio",
+						    "description": "Portfolio orchestration",
+						    "private": false,
+						    "fork": false,
+						    "html_url": "https://github.com/ZorionTen/portfolio",
+						    "pushed_at": "2026-08-14T07:00:00Z",
+						    "language": null
+						  },
+						  {
+						    "id": 1003,
+						    "name": "rushserve-docker",
+						    "full_name": "ZorionTen/rushserve-docker",
+						    "description": "RushServe local stack",
+						    "private": true,
+						    "fork": false,
+						    "html_url": "https://github.com/ZorionTen/rushserve-docker",
+						    "pushed_at": "2026-08-10T00:00:00Z",
+						    "language": "Shell"
 						  }
-						}
+						]
 						""", MediaType.APPLICATION_JSON));
 		server.expect(requestTo("https://api.github.test/repos/team/rush-serve-ui/readme"))
 				.andExpect(method(HttpMethod.GET))
@@ -124,7 +105,7 @@ class GithubRepositoryServiceTests {
 				.containsOnlyNulls();
 		assertThat(first.rushServe().repositoryCount()).isEqualTo(2);
 		assertThat(first.rushServe().lastUpdatedAt())
-				.isEqualTo(Instant.parse("2026-08-12T10:00:00Z"));
+				.isEqualTo(Instant.parse("2026-08-13T00:00:00Z"));
 		// Knowledge includes public repo + private project evidence
 		assertThat(knowledge.sources()).extracting(GithubKnowledge.Source::source)
 				.containsExactly("GitHub: portfolio", "Private project evidence");
