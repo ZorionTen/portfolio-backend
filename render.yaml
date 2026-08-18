@@ -20,8 +20,7 @@ projects:
               - key: SPRING_DATASOURCE_PASSWORD
                 sync: false
               - key: GITHUB_API_TOKEN
-                value: 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
-                sync: true
+                sync: false
               - key: AI_SERVICE_URL
                 value: https://portfolio-ai-dla4.onrender.com
           - type: web
