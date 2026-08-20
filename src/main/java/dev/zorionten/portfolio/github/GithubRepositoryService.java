@@ -25,6 +25,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @ImportRuntimeHints(GithubRepositoryService.GithubRepositoryHints.class)
 class GithubRepositoryService {
@@ -46,6 +49,7 @@ class GithubRepositoryService {
 			hints.reflection().registerType(GraphqlError.class, MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.INVOKE_DECLARED_METHODS, MemberCategory.INVOKE_PUBLIC_METHODS);
 		}
 	}
+	private static final Logger log = LoggerFactory.getLogger(GithubRepositoryService.class);
 	private static final int MAX_README_CHARACTERS = 20_000;
 	private static final Map<String, String> TECHNOLOGIES = Map.ofEntries(
 			Map.entry("api gateway", "API Gateway"),
@@ -207,6 +211,7 @@ class GithubRepositoryService {
 						.retrieve()
 						.body(GraphqlResponse.class);
 			} catch (RuntimeException exception) {
+				log.error("Failed to fetch GitHub repositories via GraphQL", exception);
 				throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "GitHub repository data is unavailable", exception);
 			}
 
