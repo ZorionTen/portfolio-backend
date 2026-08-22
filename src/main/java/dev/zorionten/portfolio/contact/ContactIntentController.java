@@ -26,13 +26,14 @@ class ContactIntentController {
 	@ResponseStatus(HttpStatus.CREATED)
 	ContactIntentResponse create(@Valid @RequestBody ContactIntentRequest request) {
 		ContactIntent contactIntent = repository.save(
-				new ContactIntent(request.companyName(), request.applicationEmail())
+				new ContactIntent(request.visitorName(), request.companyName(), request.applicationEmail())
 		);
 
 		return new ContactIntentResponse(contactIntent.getId());
 	}
 
 	record ContactIntentRequest(
+			@Size(max = 120) String visitorName,
 			@Size(max = 120) String companyName,
 			@Email @Size(max = 254) String applicationEmail
 	) {
