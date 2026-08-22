@@ -15,6 +15,9 @@ class ContactIntent {
 	@Id
 	private UUID id;
 
+	@Column(name = "visitor_name", length = 120)
+	private String visitorName;
+
 	@Column(name = "company_name", length = 120)
 	private String companyName;
 
@@ -27,8 +30,9 @@ class ContactIntent {
 	protected ContactIntent() {
 	}
 
-	ContactIntent(String companyName, String applicationEmail) {
+	ContactIntent(String visitorName, String companyName, String applicationEmail) {
 		this.id = UUID.randomUUID();
+		this.visitorName = normalize(visitorName);
 		this.companyName = normalize(companyName);
 		this.applicationEmail = normalize(applicationEmail);
 		this.createdAt = Instant.now();
