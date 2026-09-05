@@ -10,19 +10,22 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "contact_intents")
-class ContactIntent {
+public class ContactIntent {
 
 	@Id
 	private UUID id;
 
-	@Column(name = "visitor_name", length = 120)
-	private String visitorName;
+	@Column(name = "name", length = 120)
+	private String name;
 
 	@Column(name = "company_name", length = 120)
 	private String companyName;
 
-	@Column(name = "application_email", length = 254)
-	private String applicationEmail;
+	@Column(name = "email", length = 254)
+	private String email;
+
+	@Column(name = "session_id")
+	private UUID sessionId;
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
@@ -30,16 +33,37 @@ class ContactIntent {
 	protected ContactIntent() {
 	}
 
-	ContactIntent(String visitorName, String companyName, String applicationEmail) {
+	public ContactIntent(String name, String companyName, String email, UUID sessionId) {
 		this.id = UUID.randomUUID();
-		this.visitorName = normalize(visitorName);
+		this.name = normalize(name);
 		this.companyName = normalize(companyName);
-		this.applicationEmail = normalize(applicationEmail);
+		this.email = normalize(email);
+		this.sessionId = sessionId;
 		this.createdAt = Instant.now();
 	}
 
-	UUID getId() {
+	public UUID getId() {
 		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getCompanyName() {
+		return companyName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public UUID getSessionId() {
+		return sessionId;
+	}
+
+	public Instant getCreatedAt() {
+		return createdAt;
 	}
 
 	private static String normalize(String value) {
