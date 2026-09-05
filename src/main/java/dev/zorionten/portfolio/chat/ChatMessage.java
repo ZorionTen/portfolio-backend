@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "chat_messages")
-class ChatMessage {
+public class ChatMessage {
 
 	@Id
 	private UUID id;
@@ -37,7 +37,7 @@ class ChatMessage {
 	protected ChatMessage() {
 	}
 
-	ChatMessage(UUID sessionId, ChatRole role, String content, List<String> sources) {
+	public ChatMessage(UUID sessionId, ChatRole role, String content, List<String> sources) {
 		this.id = UUID.randomUUID();
 		this.sessionId = sessionId;
 		this.role = role;
@@ -46,23 +46,23 @@ class ChatMessage {
 		this.createdAt = Instant.now();
 	}
 
-	UUID getId() {
+	public UUID getId() {
 		return id;
 	}
 
-	ChatRole getRole() {
+	public ChatRole getRole() {
 		return role;
 	}
 
-	String getContent() {
+	public String getContent() {
 		return content;
 	}
 
-	List<String> getSources() {
+	public List<String> getSources() {
 		return sources == null ? List.of() : sources.lines().toList();
 	}
 
-	Instant getCreatedAt() {
+	public Instant getCreatedAt() {
 		return createdAt;
 	}
 }

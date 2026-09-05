@@ -1,6 +1,6 @@
 package dev.zorionten.portfolio.chat;
 
-enum ChatRole {
+public enum ChatRole {
 	USER,
 	ASSISTANT
 }
