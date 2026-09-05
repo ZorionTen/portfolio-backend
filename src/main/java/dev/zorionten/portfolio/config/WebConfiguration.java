@@ -16,7 +16,7 @@ class WebConfiguration implements WebMvcConfigurer {
 						"http://127.0.0.1:*"
 				)
 				.allowedMethods("GET", "POST", "OPTIONS")
-				.allowedHeaders("Content-Type")
+				.allowedHeaders("Content-Type", "X-Admin-Key")
 				.maxAge(3600);
 	}
 }
