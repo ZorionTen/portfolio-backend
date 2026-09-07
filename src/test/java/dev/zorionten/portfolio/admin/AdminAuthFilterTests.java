@@ -56,4 +56,16 @@ class AdminAuthFilterTests {
 		assertThat(response.getStatus()).isEqualTo(200);
 		assertThat(chain.getRequest()).isNotNull();
 	}
+
+	@Test
+	void doesNotFilterOptionsPreflight() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest("OPTIONS", "/api/admin/sessions");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		MockFilterChain chain = new MockFilterChain();
+
+		filter.doFilter(request, response, chain);
+
+		assertThat(response.getStatus()).isEqualTo(200);
+		assertThat(chain.getRequest()).isNotNull();
+	}
 }
